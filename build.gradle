@@ -1,0 +1,59 @@
+group 'com.impinj'
+version '1.0.1-SNAPSHOT'
+
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+mainClassName = 'com.impinj.rtls.connector.ConnectorApplication'
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+    }
+}
+
+apply plugin: "com.github.johnrengelman.shadow"
+
+project.ext {
+    configPath = "$rootProject.projectDir/config/"
+    dropwizardVersion = '1.0.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(
+            [group: 'com.squarespace.jersey2-guice', name: '0-jersey2-guice-spi', version: '1.0.6'],
+            [group: 'com.hubspot.dropwizard', name: 'dropwizard-guice', version: '1.0.0'],
+            [group: 'io.dropwizard', name: 'dropwizard-core', version: dropwizardVersion],
+            [group: 'io.dropwizard', name: 'dropwizard-client', version: dropwizardVersion],
+            [group: 'io.dropwizard', name: 'dropwizard-auth', version: dropwizardVersion],
+            [group: 'com.rabbitmq', name: 'amqp-client', version: '3.6.5'],
+            [group: 'org.glassfish.jersey.media', name: 'jersey-media-jaxb', version: '2.23.2'],
+            [group: 'com.typesafe.akka', name: 'akka-actor_2.11', version: '2.4.8'])
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+run {
+    args 'server', configPath + '/application.yml'
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
