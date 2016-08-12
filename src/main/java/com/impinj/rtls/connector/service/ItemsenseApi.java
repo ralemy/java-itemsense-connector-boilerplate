@@ -1,15 +1,12 @@
 package com.impinj.rtls.connector.service;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.impinj.rtls.connector.config.ConnectorConfiguration;
-import com.impinj.rtls.connector.config.ItemsenseConfig;
-import com.impinj.rtls.connector.resource.ImpinjRTLSApiException;
+import com.impinj.rtls.connector.app.config.ConnectorConfiguration;
+import com.impinj.rtls.connector.app.config.ItemsenseConfig;
+import com.impinj.auth.ImpinjApiException;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -23,10 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -53,7 +47,7 @@ public class ItemsenseApi {
         log.info("------------> user: {}, pass {} ", this.config.getUsername(), this.config.getPassword());
     }
 
-    public <T> T doGet(String url, Class<T> cls) throws IOException, ImpinjRTLSApiException {
+    public <T> T doGet(String url, Class<T> cls) throws IOException, ImpinjApiException {
         try(CloseableHttpClient httpClient = makeAuthenticatedClient()){
             HttpGet get = new HttpGet(cleanUrl(url));
             try (CloseableHttpResponse response = httpClient.execute(get)) {
@@ -62,7 +56,7 @@ public class ItemsenseApi {
         }
     }
 
-    public <T> T doPost(String url, HttpEntity payload, Class<T> cls) throws IOException, ImpinjRTLSApiException {
+    public <T> T doPost(String url, HttpEntity payload, Class<T> cls) throws IOException, ImpinjApiException {
         try(CloseableHttpClient httpClient = HttpClients.custom()
         .setDefaultCredentialsProvider(this.credentialsProvider).build()){
             HttpPost post = new HttpPost(cleanUrl(url));
@@ -78,10 +72,10 @@ public class ItemsenseApi {
     private String cleanUrl(String url){
         return "http://" + (this.config.getBaseUrl().replaceAll("^http.//","").replaceAll("/$","")) + "/" + url.replaceAll("^/","").replaceAll("/$","") ;
     }
-    private <T> T processResponse(CloseableHttpResponse response, Class<T> cls) throws IOException, ImpinjRTLSApiException {
+    private <T> T processResponse(CloseableHttpResponse response, Class<T> cls) throws IOException, ImpinjApiException {
         if(response.getStatusLine().getStatusCode() > 399) {
             log.info("Status: {}, Message: {}",response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
-            throw new ImpinjRTLSApiException(response);
+            throw new ImpinjApiException(response);
         }
         return objectMapper.readValue(response.getEntity().getContent(),cls);
     }
